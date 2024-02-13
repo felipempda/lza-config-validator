@@ -7,57 +7,10 @@ name: on-commit-to-main
 
 jobs:
   create-pull-requests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
-        with:
-          fetch-depth: 0 # Checkout everything to get access to the tags
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Send pull-request
-        run: |
-          LATEST_TAG=$(git describe --tags --always --abbrev=0)
-          REPOSITORY="felipempda/test-reference-image"
-          FOLDER="reference"
-          BRANCH_NAME="chore-update-scripts-to-$LATEST_TAG"
-
-          # Clone the remote repository and change working directory to the
-          # folder it was cloned to.
-          git clone \
-            --depth=1 \
-            --branch=main \
-            https://:${{ secrets.ACCESS_TOKEN }}@github.com/$REPOSITORY \
-            $FOLDER
-
-          cd $reference
-
-          # Setup the committers identity.
-          git config user.email "some-user@some-domain.com"
-          git config user.name "Some User"
-
-          # Create a new feature branch for the changes.
-          git checkout -b $BRANCH_NAME
-
-          # Update the script files to the latest version.
-          sed -i '' -e  "s/lza-config-validator:.*/lza-config-validator:$LATEST_TAG/g" ./dev/deployment.yaml 
-
-          # Commit the changes and push the feature branch to origin
-          git add .
-          git commit -m "chore: update scripts to $LATEST_TAG"
-          git push origin $BRANCH_NAME
-
-          # Store the PAT in a file that can be accessed by the
-          # GitHub CLI.
-          echo "${{ secrets.ACCESS_TOKEN }}" > token.txt
-
-          # Authorize GitHub CLI for the current repository and
-          # create a pull-requests containing the updates.
-          gh auth login --with-token < token.txt
-          gh pr create \
-            --body "" \
-            --title "chore: update scripts to $LATEST_TAG" \
-            --head "$BRANCH_NAME" \
-            --base "main"
+    uses: ./.github/workflows/reusable-workflow.yaml
+    secrets: inherit
+    with:
+      repository_name: "felipempda/test-reference-image"
+      repository_branch: "main"
+      files_to_update: "dev/deployment.yaml qa/deployment.yaml prod/deployment.yaml"
+      sed_image_ref: "lza-config-validator"
