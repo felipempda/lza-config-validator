@@ -1,9 +1,11 @@
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Build Docker Image"]
+    branches: [main]
+    types: 
+      - completed
 
-name: on-commit-to-main
+name: PR to update tag references
 
 jobs:
   create-pull-requests:
@@ -13,4 +15,4 @@ jobs:
       repository_name: "felipempda/test-reference-image"
       repository_branch: "main"
       files_to_update: "dev/deployment.yaml qa/deployment.yaml prod/deployment.yaml"
-      sed_image_ref: "lza-config-validator"
+      sed_image_ref: "lza-config-validator" 

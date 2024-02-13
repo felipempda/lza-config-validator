@@ -1,10 +1,7 @@
 name: Build Docker Image
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
   release:
     types: [ published ]
 
@@ -29,7 +26,7 @@ jobs:
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.MY_GH_TOKEN }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
