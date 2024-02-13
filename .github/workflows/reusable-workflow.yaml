@@ -1,0 +1,118 @@
+on:
+  workflow_call:
+    inputs:
+      repository_name:
+        type: string
+        required: true
+        default: "felipempda/test-reference-image"
+      repository_branch:
+        type: string
+        required: true
+        default: "main"
+      files_to_update: # separated by space
+        type: string
+        required: true
+        default: "dev/deployment.yaml qa/deployment.yaml prod/deployment.yaml"
+      sed_image_ref:
+        type: string
+        required: true
+        # this should be enough to help sed find the line it's supposed to update (ex: image:tag)
+        default: "lza-config-validator" 
+      sed_update_tag_expression:
+        type: string
+        required: false
+        # but in case config is different, you can change the whole sed expression:
+        default: '/${SED_IMAGE_REF}/s/[v0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*/${LATEST_TAG}/g' 
+      git_commit_msg:
+        type: string
+        required: false
+        default: 'chore: update ${SED_IMAGE_REF} to ${LATEST_TAG}'
+      git_user_name:
+        type: string
+        required: false
+        default: 'Automation'
+      git_user_email:
+        type: string
+        required: false
+        default: 'automation@domain.com'
+    secrets:
+       ACCESS_TOKEN:
+          required: true
+
+name: Create PR to change image tag
+
+jobs:
+  create-pull-requests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        with:
+          fetch-depth: 0 # Checkout everything to get access to the tags
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create pull-request
+        run: |
+          set -e
+          set -x
+
+          # ref: (needs to be first because of variable replacement later)
+          export LATEST_TAG=$(git describe --tags --always --abbrev=0)
+          export NEW_BRANCH="feat/chore-update-tag-to-$LATEST_TAG"
+
+          # input:
+          REPOSITORY_NAME="${{ inputs.repository_name }}"
+          REPOSITORY_BRANCH="${{ inputs.repository_branch }}"
+          FILES_TO_UPDATE="${{ inputs.files_to_update }}"
+          SED_IMAGE_REF="${{ inputs.sed_image_ref }}"
+          SED_UPDATE_TAG_EXPRESSION="${{ inputs.sed_update_tag_expression }}"
+          GIT_COMMIT_MSG="${{ inputs.git_commit_msg }}"
+          GIT_USER_NAME="${{ inputs.git_user_name }}"
+          GIT_USER_EMAIL="${{ inputs.git_user_email }}"
+
+          # Clone the remote repository and change working directory to the
+          # folder it was cloned to.
+          git clone \
+            --depth=1 \
+            --branch=$REPOSITORY_BRANCH \
+            https://user:${{ secrets.ACCESS_TOKEN }}@github.com/$REPOSITORY_NAME \
+            remote-repo-xx
+
+          cd remote-repo-xx
+
+          # Setup the committers identity.
+          git config user.email "$GIT_USER_EMAIL"
+          git config user.name  "$GIT_USER_NAME"
+
+          # Create a new feature branch for the changes.
+          git checkout -b $NEW_BRANCH
+
+          # Update the docker tag to latest version on each file
+          echo $FILES_TO_UPDATE
+          echo $SED_UPDATE_TAG_EXPRESSION
+          for FILE in $FILES_TO_UPDATE; do
+            echo $FILE
+            # Update tag: (eval makes sure any reference to environment variables is dereferenced, not the most secure, but very powerful)
+            sed -i -e "$SED_UPDATE_TAG_EXPRESSION" "$FILE"   
+          done
+           
+          # Commit the changes and push the feature branch to origin
+          git add .
+          git commit -m "$GIT_COMMIT_MSG"
+          git push origin "$NEW_BRANCH"
+
+          # Store the PAT in a file that can be accessed by the
+          # GitHub CLI.
+          echo "${{ secrets.ACCESS_TOKEN }}" > token.txt
+
+          # Authorize GitHub CLI for the current repository and
+          # create a pull-requests containing the updates.
+          gh auth login --with-token < token.txt
+          rm token.txt
+          gh pr create \
+            --body "" \
+            --title "$GIT_COMMIT_MSG" \
+            --head "$NEW_BRANCH" \
+            --base "$REPOSITORY_BRANCH"
