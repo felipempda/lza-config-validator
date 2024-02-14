@@ -42,7 +42,7 @@ on:
 name: Create PR to change image tag
 
 jobs:
-  create-pull-requests:
+  update-tag-reference:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

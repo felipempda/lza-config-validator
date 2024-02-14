@@ -6,11 +6,12 @@ on:
     types: 
       - completed
 
-name: PR to update tag references
+name: Create Pull Request to update tag references
 
 jobs:
-  create-pull-requests:
+  create-pull-request:
     uses: ./.github/workflows/reusable-workflow.yaml
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     secrets: inherit
     with:
       repository_name: "felipempda/test-reference-image"
