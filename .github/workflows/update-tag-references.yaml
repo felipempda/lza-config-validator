@@ -2,16 +2,42 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows: [Build Docker Image]
-    branches: [main]
-    types: 
-      - completed
+    # branches: [main] this doesn't work for workflows that run on releases
+    types: [completed]
 
 name: Create Pull Request to update tag references
 
 jobs:
+  dump_contexts_to_log:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJson(job) }}
+        run: echo "$JOB_CONTEXT"
+      - name: Dump steps context
+        env:
+          STEPS_CONTEXT: ${{ toJson(steps) }}
+        run: echo "$STEPS_CONTEXT"
+      - name: Dump runner context
+        env:
+          RUNNER_CONTEXT: ${{ toJson(runner) }}
+        run: echo "$RUNNER_CONTEXT"
+      - name: Dump strategy context
+        env:
+          STRATEGY_CONTEXT: ${{ toJson(strategy) }}
+        run: echo "$STRATEGY_CONTEXT"
+      - name: Dump matrix context
+        env:
+          MATRIX_CONTEXT: ${{ toJson(matrix) }}
+        run: echo "$MATRIX_CONTEXT"
   create-pull-request:
     uses: ./.github/workflows/reusable-workflow.yaml
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: false # ${{ github.event.workflow_run.conclusion == 'success' }}
     secrets: inherit
     with:
       repository_name: "felipempda/test-reference-image"
