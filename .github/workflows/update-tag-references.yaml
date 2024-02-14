@@ -35,6 +35,16 @@ jobs:
         env:
           MATRIX_CONTEXT: ${{ toJson(matrix) }}
         run: echo "$MATRIX_CONTEXT"
+      # testing tags
+      - name: Checkout code
+        uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # v3.3.0
+        with:
+          fetch-depth: 0 # Checkout everything to get access to the tags
+      - name: Seeing tags
+        run: |
+          git status
+          git describe --tags --always --abbrev=0
+
   create-pull-request:
     uses: ./.github/workflows/reusable-workflow.yaml
     if: false # ${{ github.event.workflow_run.conclusion == 'success' }}
