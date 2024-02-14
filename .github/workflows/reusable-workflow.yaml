@@ -60,6 +60,7 @@ jobs:
 
           # ref: (needs to be first because of variable replacement later)
           export LATEST_TAG=$(git describe --tags --always --abbrev=0)
+          CURRENTDATE=$(date '+%Y%m%d-%Hh%M')
           export NEW_BRANCH="feat/chore-update-tag-to-$LATEST_TAG"
 
           # input:
