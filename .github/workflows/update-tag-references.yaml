@@ -2,7 +2,7 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows: [Build Docker Image]
-    #branches: [main]
+    branches: [main]
     types: 
       - completed
 
