@@ -80,7 +80,8 @@ jobs:
     
       - name: Test failure build
         run: |
-          FAILURE="${{ secrets.FAILURE_BUILD }}""
+          set -e
+          FAILURE="${{ secrets.FAILURE_BUILD }}"
           if [[ "$FAILURE" == "yes" ]]; 
              echo "failing build"
              exit 1
