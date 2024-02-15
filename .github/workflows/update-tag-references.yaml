@@ -64,21 +64,13 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
-      
-  test-multi:
-    runs-on: ubuntu-latest
-    # run if build workflow is successful or if is requested manually:
-    if: ${{ (github.event.workflow_run.conclusion == 'success') || (github.event_name = 'workflow_dispatch') }}
-    steps:
-      - name: Test
-        run: echo "yae"
-
+    
   create-pull-request:
     permissions:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/reusable-workflow.yaml
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ (github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch') }}
     secrets: 
       ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     with:
