@@ -82,7 +82,7 @@ jobs:
         run: |
           set -e
           FAILURE="${{ secrets.FAILURE_BUILD }}"
-          if [[ "$FAILURE" == "yes" ]]; 
+          if [[ "$FAILURE" == "yes" ]]; then
              echo "failing build"
              exit 1
           fi
