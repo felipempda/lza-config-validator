@@ -75,7 +75,7 @@ jobs:
 
   create-pull-request:
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     uses: ./.github/workflows/reusable-workflow.yaml
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
