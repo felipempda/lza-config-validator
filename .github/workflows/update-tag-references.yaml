@@ -2,7 +2,8 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows: [Build Docker Image]
-    # branches: [main] this doesn't work for workflows that run on releases
+    branches: 
+      - v* # testing if this can be used
     types: [completed]
 
 name: Create Pull Request to update tag references
@@ -70,7 +71,8 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/reusable-workflow.yaml
-    if: ${{ (github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch') }}
+    # only if it's workflow_run from a sucessfull release or if it's triggered manually
+    if: ${{ ((github.event.workflow_run.conclusion == 'success') && (github.event.workflow_run.event == 'release')) || (github.event_name == 'workflow_dispatch') }}
     secrets: 
       ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
     with:
