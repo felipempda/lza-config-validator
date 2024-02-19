@@ -2,7 +2,9 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows: [Build Docker Image]
-    branches: [refs/tags/**]
+    branches:
+      - v[0-9]+.[0-9]+.[0-9]+
+      - [0-9]+.[0-9]+.[0-9]+
     types: [completed]
 
 name: Create Pull Request to update tag references
